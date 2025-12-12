@@ -1,20 +1,15 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Craftle
 
-# Run and deploy your AI Studio app
+Um jogo de adivinhação inspirado no Wordle, mas com receitas de crafting do Minecraft! Adivinhe qual item está sendo fabricado observando os ingredientes revelados na bancada de trabalho.
 
-This contains everything you need to run your app locally.
+## 🎮 Como Jogar
 
-View your app in AI Studio: https://ai.studio/apps/drive/1YHQvMPRZE-6dcuXP2vKIIg471TVFbHJ3
+Você precisa descobrir qual item está sendo fabricado baseado nos ingredientes que são revelados gradualmente na grade de crafting 3x3. Cada erro revela mais um ingrediente, mas você tem um número limitado de vidas!
 
-## Run Locally
+## 🌐 Jogue Agora
 
-**Prerequisites:**  Node.js
+**[https://www.craftle.com.br/](https://www.craftle.com.br/)**
 
+## 📸 Screenshot
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+![Craftle Game Screenshot](.github/assets/image.png)

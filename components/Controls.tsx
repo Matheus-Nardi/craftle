@@ -232,7 +232,7 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
              return (
                <img
                  key={index}
-                 src="/assets/hardcore-heart.png"
+                 src="/hardcore-heart.png"
                  alt={isFull ? "Coração cheio" : "Coração vazio"}
                  className={`w-5 h-5 sm:w-6 sm:h-6 transition-all duration-200 ${
                    isFull 
