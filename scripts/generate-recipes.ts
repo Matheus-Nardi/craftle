@@ -4,8 +4,8 @@
  */
 
 import mcData from 'minecraft-data';
-import { writeFileSync } from 'fs';
-import { join } from 'path';
+import { writeFileSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
 
 const MC_VERSION = '1.20.1';
 const mc = mcData(MC_VERSION);
@@ -182,15 +182,45 @@ export interface ProcessedRecipe {
 export const recipesData: ProcessedRecipe[] = ${JSON.stringify(processedRecipes, null, 2)} as ProcessedRecipe[];
 `;
   
+  // Garante que o diretório existe antes de escrever
+  const outputDir = dirname(outputPath);
+  try {
+    mkdirSync(outputDir, { recursive: true });
+  } catch (e: any) {
+    // Se não for erro de diretório existente, relança
+    if (e.code !== 'EEXIST') {
+      throw e;
+    }
+  }
+  
   writeFileSync(outputPath, tsContent, 'utf-8');
 
-  // Também salva JSON para referência (opcional)
-  const jsonPath = join(process.cwd(), 'src', 'data', 'recipes.json');
-  writeFileSync(jsonPath, JSON.stringify(processedRecipes, null, 2), 'utf-8');
-
-  console.log(`✅ ${processedRecipes.length} receitas processadas e salvas em:`);
-  console.log(`   - ${outputPath} (TypeScript - usado pelo app)`);
-  console.log(`   - ${jsonPath} (JSON - referência)`);
+  // Também salva JSON para referência (opcional - apenas se o diretório src/data existir ou puder ser criado)
+  try {
+    const jsonPath = join(process.cwd(), 'src', 'data', 'recipes.json');
+    const jsonDir = dirname(jsonPath);
+    
+    // Tenta criar o diretório
+    try {
+      mkdirSync(jsonDir, { recursive: true });
+    } catch (e: any) {
+      // Se não conseguir criar, ignora (não é crítico)
+      if (e.code !== 'EEXIST') {
+        console.warn(`⚠️  Não foi possível criar diretório para JSON: ${jsonDir}`);
+        throw e;
+      }
+    }
+    
+    writeFileSync(jsonPath, JSON.stringify(processedRecipes, null, 2), 'utf-8');
+    console.log(`✅ ${processedRecipes.length} receitas processadas e salvas em:`);
+    console.log(`   - ${outputPath} (TypeScript - usado pelo app)`);
+    console.log(`   - ${jsonPath} (JSON - referência)`);
+  } catch (e) {
+    // Se falhar ao salvar JSON, não é crítico - o TypeScript é o importante
+    console.log(`✅ ${processedRecipes.length} receitas processadas e salvas em:`);
+    console.log(`   - ${outputPath} (TypeScript - usado pelo app)`);
+    console.log(`   ⚠️  JSON não foi salvo (não crítico)`);
+  }
 };
 
 generateRecipesData();

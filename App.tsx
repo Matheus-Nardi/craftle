@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Confetti from 'react-confetti';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Recipe, GameStatus, Guess } from './types';
 import { RECIPES } from './constants';
 import CraftingTable from './components/CraftingTable';
@@ -404,6 +406,10 @@ const App: React.FC = () => {
           </a>
         </p>
       </div>
+      
+      {/* Vercel Analytics e Speed Insights */}
+      <Analytics />
+      <SpeedInsights />
     </div>
   );
 };
