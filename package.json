@@ -4,10 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "npx tsx scripts/generate-recipes.ts",
     "dev": "vite",
-    "build": "vite build",
+    "prebuild": "npx tsx scripts/generate-recipes.ts",
+    "build": "node --max-old-space-size=4096 node_modules/.bin/vite build",
     "preview": "vite preview",
-    "extract": "node scripts/extract-recipes.js"
+    "extract": "node scripts/extract-recipes.js",
+    "generate-recipes": "npx tsx scripts/generate-recipes.ts"
   },
   "dependencies": {
     "lucide-react": "0.454.0",
@@ -18,7 +21,9 @@
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "minecraft-data": "^3.101.0",
     "node-fetch": "^3.3.2",
+    "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

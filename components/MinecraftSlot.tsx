@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Item } from '../types';
+import { MinecraftIcon } from './MinecraftIcon';
 
 interface MinecraftSlotProps {
   item: Item | null;
@@ -9,13 +10,18 @@ interface MinecraftSlotProps {
 }
 
 const MinecraftSlot: React.FC<MinecraftSlotProps> = ({ item, isRevealed, size = 'md', isResult = false }) => {
-  const [imageError, setImageError] = useState(false);
-  
   // Dimensions based on size
   const dimClasses = {
     sm: 'w-10 h-10',
     md: 'w-16 h-16 sm:w-20 sm:h-20',
     lg: 'w-24 h-24'
+  }[size];
+
+  // Tamanho da imagem baseado no size
+  const iconSize = {
+    sm: 32,
+    md: 48,
+    lg: 64
   }[size];
 
   // The specific Minecraft slot bevel style
@@ -38,43 +44,19 @@ const MinecraftSlot: React.FC<MinecraftSlotProps> = ({ item, isRevealed, size = 
       {/* Result slot often has no inner shadow or purely different logic, but consistent style looks best */}
       
       {isRevealed && item ? (
-        <div className="animate-fade-in transition-opacity duration-500">
-          {item.imageUrl && !imageError ? (
-            <div className="relative group">
-              <img 
-                src={item.imageUrl} 
-                alt={item.name} 
-                className="w-[85%] h-[85%] object-contain mx-auto"
-                style={{
-                  imageRendering: 'pixelated' as const
-                }}
-                onError={() => setImageError(true)}
-              />
-              {/* Tooltip on hover */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 whitespace-nowrap">
-                <div className="bg-[#100010] border-2 border-[#2f0664] text-white text-[10px] px-2 py-1 relative">
-                  <span className='text-[#aaa]'>{item.name}</span>
-                </div>
-              </div>
+        <div className="animate-fade-in transition-opacity duration-500 relative group w-full h-full flex items-center justify-center">
+          <MinecraftIcon 
+            name={item.id}
+            size={iconSize}
+            alt={item.name}
+            className="w-[85%] h-[85%] object-contain"
+          />
+          {/* Tooltip on hover */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 whitespace-nowrap">
+            <div className="bg-[#100010] border-2 border-[#2f0664] text-white text-[10px] px-2 py-1 relative">
+              <span className='text-[#aaa]'>{item.name}</span>
             </div>
-          ) : (
-             <div className="relative group">
-                {item.icon && (
-                    <item.icon 
-                        size={size === 'sm' ? 20 : size === 'lg' ? 48 : 40} 
-                        color={item.color || 'white'} 
-                        strokeWidth={2.5}
-                        className="drop-shadow-md"
-                    />
-                )}
-                {/* Tooltip on hover */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 whitespace-nowrap">
-                   <div className="bg-[#100010] border-2 border-[#2f0664] text-white text-[10px] px-2 py-1 relative">
-                      <span className='text-[#aaa]'>{item.name}</span>
-                   </div>
-                </div>
-             </div>
-          )}
+          </div>
         </div>
       ) : isResult && !isRevealed ? (
           <span className="text-[#373737] text-4xl opacity-50">?</span>

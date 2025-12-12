@@ -83,8 +83,10 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
   }, [selectedIndex]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputText(e.target.value);
-    setShowSuggestions(true);
+    const value = e.target.value;
+    setInputText(value);
+    // Só mostra sugestões se o usuário digitou algo
+    setShowSuggestions(value.trim().length > 0);
     setSelectedIndex(-1);
     // Clear error message when user starts typing
     if (errorMessage) {
@@ -129,7 +131,10 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
   };
 
   const handleInputFocus = () => {
-    setShowSuggestions(true);
+    // Só mostra sugestões se já há texto digitado
+    if (inputText.trim().length > 0) {
+      setShowSuggestions(true);
+    }
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
@@ -148,7 +153,7 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
     <div className="w-full max-w-2xl mx-auto flex flex-col gap-4 overflow-x-hidden">
       
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="flex gap-2 w-full relative max-w-full">
+      <form onSubmit={handleSubmit} className="flex gap-2 w-full relative max-w-full" autoComplete="off">
         <div className="flex-1 relative">
           <div className="bg-[#8b8b8b] border-2 border-b-white border-r-white border-t-[#373737] border-l-[#373737] p-1">
             <input
@@ -159,29 +164,37 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
               onFocus={handleInputFocus}
               onBlur={handleInputBlur}
               disabled={isGameOver}
-              placeholder={isGameOver ? (gameStatus === 'won' ? "VOCÊ FABRICOU!" : "FIM DE JOGO") : "Qual é este item?"}
+              placeholder={isGameOver ? (gameStatus === 'won' ? "VOCÊ FABRICOU!" : "FIM DE JOGO") : "Digite o nome do item..."}
               className="w-full h-full bg-[#8b8b8b] text-white font-['Press_Start_2P'] p-3 focus:outline-none placeholder-gray-400 text-xs sm:text-sm md:text-base max-w-full"
-              autoFocus
-              list="craftable-items"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
             />
           </div>
           
           {/* Autocomplete Suggestions */}
-          {showSuggestions && !isGameOver && filteredSuggestions.length > 0 && (
+          {showSuggestions && !isGameOver && inputText.trim().length > 0 && filteredSuggestions.length > 0 && (
             <div 
               ref={suggestionsRef}
-              className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-[#8b8b8b] border-2 border-b-white border-r-white border-t-[#373737] border-l-[#373737]"
+              className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-[#8b8b8b] border-2 border-b-white border-r-white border-t-[#373737] border-l-[#373737] shadow-lg"
               style={{ 
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#c6c6c6 #8b8b8b'
               }}
             >
+              {filteredSuggestions.length > 10 && (
+                <div className="px-3 py-1 text-[10px] text-gray-400 border-b border-[#373737]">
+                  {filteredSuggestions.length} itens encontrados (use ↑↓ para navegar)
+                </div>
+              )}
               {filteredSuggestions.map((suggestion, index) => (
                 <div
                   key={suggestion}
                   onClick={() => handleSuggestionClick(suggestion)}
+                  onMouseEnter={() => setSelectedIndex(index)}
                   className={`
-                    px-3 py-2 cursor-pointer font-['Press_Start_2P'] text-xs md:text-sm
+                    px-3 py-2 cursor-pointer font-['Press_Start_2P'] text-xs md:text-sm transition-colors
                     ${index === selectedIndex 
                       ? 'bg-[#c6c6c6] text-[#202020]' 
                       : 'text-white hover:bg-[#a0a0a0]'
@@ -194,12 +207,12 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
             </div>
           )}
           
-          {/* Datalist fallback for native browser autocomplete */}
-          <datalist id="craftable-items">
-            {CRAFTABLE_ITEMS.map(item => (
-              <option key={item} value={item} />
-            ))}
-          </datalist>
+          {/* Mensagem quando não há sugestões mas há texto */}
+          {showSuggestions && !isGameOver && inputText.trim().length > 0 && filteredSuggestions.length === 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-[#8b8b8b] border-2 border-b-white border-r-white border-t-[#373737] border-l-[#373737] px-3 py-2 text-white font-['Press_Start_2P'] text-xs">
+              Nenhum item encontrado
+            </div>
+          )}
           
           {/* Error Message */}
           {errorMessage && (

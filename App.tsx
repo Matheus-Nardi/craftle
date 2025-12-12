@@ -41,6 +41,8 @@ interface DailyGameState {
 const App: React.FC = () => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [revealedIndices, setRevealedIndices] = useState<Set<number>>(new Set());
+  const [animatedIndices, setAnimatedIndices] = useState<Set<number>>(new Set());
+  const [showResult, setShowResult] = useState(false);
   const [guesses, setGuesses] = useState<Guess[]>([]);
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing');
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
@@ -67,6 +69,8 @@ const App: React.FC = () => {
     
     setGuesses([]);
     setGameStatus('playing');
+    setAnimatedIndices(new Set());
+    setShowResult(false);
   }, []);
 
   // Inicializa o jogo ao carregar
@@ -221,6 +225,69 @@ const App: React.FC = () => {
       .trim();
   };
 
+  // Animação de preenchimento automático do craft
+  useEffect(() => {
+    if (!recipe || gameStatus === 'playing') {
+      // Limpa animação quando volta a jogar
+      setAnimatedIndices(new Set());
+      setShowResult(false);
+      return;
+    }
+
+    // Delay antes de começar a animação (maior se o usuário errou)
+    const initialDelay = gameStatus === 'lost' ? 2000 : 500; // 2s se errou, 0.5s se acertou
+    
+    let revealInterval: NodeJS.Timeout | null = null;
+    
+    const timeout = setTimeout(() => {
+      // Pega todos os índices que têm itens (não são null)
+      const allOccupiedIndices = recipe.ingredients
+        .map((item, index) => item !== null ? index : -1)
+        .filter(i => i !== -1);
+      
+      // Filtra apenas os que ainda não foram revelados (nem durante o jogo nem na animação)
+      const allRevealed = new Set([...revealedIndices, ...animatedIndices]);
+      const indicesToReveal = allOccupiedIndices.filter(i => !allRevealed.has(i));
+      
+      // Função para mostrar o resultado após revelar todos os ingredientes
+      const showResultAfterAnimation = () => {
+        setTimeout(() => {
+          setShowResult(true);
+        }, 500);
+      };
+      
+      // Se não há mais nada para revelar, mostra o resultado imediatamente
+      if (indicesToReveal.length === 0) {
+        showResultAfterAnimation();
+        return;
+      }
+      
+      // Revela um índice por vez com intervalo de 1 segundo
+      let currentIndex = 0;
+      revealInterval = setInterval(() => {
+        if (currentIndex < indicesToReveal.length) {
+          const indexToReveal = indicesToReveal[currentIndex];
+          setAnimatedIndices(prev => new Set([...prev, indexToReveal]));
+          currentIndex++;
+        } else {
+          if (revealInterval) {
+            clearInterval(revealInterval);
+            revealInterval = null;
+          }
+          // Depois de revelar todos os ingredientes, mostra o resultado após 0.5s
+          showResultAfterAnimation();
+        }
+      }, 1000); // 1 segundo entre cada item
+    }, initialDelay);
+
+    return () => {
+      clearTimeout(timeout);
+      if (revealInterval) {
+        clearInterval(revealInterval);
+      }
+    };
+  }, [gameStatus, recipe, revealedIndices]);
+
   const handleGuess = (text: string) => {
     if (!recipe || gameStatus !== 'playing') return;
 
@@ -279,8 +346,8 @@ const App: React.FC = () => {
 
         <CraftingTable 
             recipe={recipe} 
-            revealedIndices={revealedIndices} 
-            isWon={gameStatus === 'won' || gameStatus === 'lost'} // Reveal result on loss too? Usually strictly on win or end.
+            revealedIndices={new Set([...revealedIndices, ...animatedIndices])} 
+            isWon={showResult} // Só mostra o resultado depois que todos os ingredientes foram revelados
         />
 
         <div className="my-6 border-b-2 border-white opacity-50"></div>
