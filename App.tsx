@@ -52,11 +52,19 @@ const App: React.FC = () => {
     const randomRecipe = RECIPES[Math.floor(Math.random() * RECIPES.length)];
     setRecipe(randomRecipe);
     
-    // Revela uma posição aleatória do grid (pode ser vazia ou com item)
-    const allIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    const startIndex = allIndices[Math.floor(Math.random() * allIndices.length)];
+    // Revela uma posição aleatória COM item (não vazia)
+    const occupiedIndices = randomRecipe.ingredients
+      .map((item, index) => item !== null ? index : -1)
+      .filter(i => i !== -1);
     
-    setRevealedIndices(new Set([startIndex]));
+    // Sempre revela pelo menos um ingrediente
+    if (occupiedIndices.length > 0) {
+      const startIndex = occupiedIndices[Math.floor(Math.random() * occupiedIndices.length)];
+      setRevealedIndices(new Set([startIndex]));
+    } else {
+      setRevealedIndices(new Set());
+    }
+    
     setGuesses([]);
     setGameStatus('playing');
   }, []);
@@ -166,21 +174,36 @@ const App: React.FC = () => {
   }, [recipe, revealedIndices, guesses, gameStatus, todayString]);
   */
 
-  // Sistema de vidas fixo (padrão: 5 vidas)
-  const MAX_LIVES = 5;
+  // Sistema de vidas dinâmico baseado na quantidade de ingredientes
+  // Crafts pequenos (2-3 itens): 3 vidas
+  // Crafts médios (4-5 itens): 4 vidas
+  // Crafts grandes (6+ itens): 5 vidas
+  const getMaxLives = (recipe: Recipe | null): number => {
+    if (!recipe) return 5;
+    const ingredientCount = recipe.ingredients.filter(i => i !== null).length;
+    if (ingredientCount <= 3) return 3;
+    if (ingredientCount <= 5) return 4;
+    return 5;
+  };
+
+  const MAX_LIVES = getMaxLives(recipe);
   const livesUsed = guesses.filter(g => !g.isCorrect).length;
   const livesLeft = MAX_LIVES - livesUsed;
 
-  // Sistema de dicas: revela uma posição aleatória do grid (pode ser vazia ou com item)
-  // Isso não revela quantos ingredientes existem
+  // Sistema de dicas: revela apenas posições COM itens (não vazias)
+  // Isso garante que sempre revele algo útil
   const revealNextHint = (currentRevealed: Set<number>, currentRecipe: Recipe) => {
-    // Todas as posições do grid (0-8), não apenas as ocupadas
-    const allIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    const hiddenIndices = allIndices.filter(i => !currentRevealed.has(i));
+    // Apenas posições ocupadas por ingredientes
+    const occupiedIndices = currentRecipe.ingredients
+      .map((item, index) => item !== null ? index : -1)
+      .filter(i => i !== -1);
     
-    if (hiddenIndices.length > 0) {
-        // Revela uma posição aleatória (pode ser vazia ou com item)
-        const nextIndex = hiddenIndices[Math.floor(Math.random() * hiddenIndices.length)];
+    // Filtra apenas os que ainda não foram revelados
+    const hiddenOccupied = occupiedIndices.filter(i => !currentRevealed.has(i));
+    
+    if (hiddenOccupied.length > 0) {
+        // Revela um ingrediente aleatório que ainda não foi revelado
+        const nextIndex = hiddenOccupied[Math.floor(Math.random() * hiddenOccupied.length)];
         const newSet = new Set(currentRevealed);
         newSet.add(nextIndex);
         setRevealedIndices(newSet);

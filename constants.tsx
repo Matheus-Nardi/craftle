@@ -45,15 +45,15 @@ const getSpriteUrl = (itemId: string, itemName?: string): string => {
     'plank': { fileName: 'Oak_Planks', jeVersion: 'JE6', beVersion: 'BE3' },
     'coal': { fileName: 'Coal', jeVersion: 'JE4', beVersion: 'BE3' },
     'iron': { fileName: 'Iron_Ingot', jeVersion: 'JE3', beVersion: 'BE2' },
-    'd_sword': { fileName: 'Diamond_Sword', jeVersion: 'JE3', beVersion: 'BE3' },
+    'd_sword': 'https://minecraft.wiki/images/Invicon_Diamond_Leggings.png?b4750',
     'd_pick': { fileName: 'Diamond_Pickaxe', jeVersion: 'JE3', beVersion: 'BE3' },
     'w_shovel': { fileName: 'Wooden_Shovel', jeVersion: 'JE2', beVersion: 'BE2' },
-    'torch': 'https://minecraft.wiki/images/Invicon_Torch.png?8fc2f',
-    'boots': { fileName: 'Iron_Boots', jeVersion: 'JE3', beVersion: 'BE2' },
+    'torch': 'https://minecraft.wiki/images/thumb/Torch.gif/150px-Torch.gif?8e1d4',
+    'boots': 'https://minecraft.wiki/images/Invicon_Iron_Boots.png?caf88',
     'string': 'https://minecraft.wiki/images/thumb/String_JE2_BE2.png/120px-String_JE2_BE2.png?25d69',
-    'bow': 'https://minecraft.wiki/images/Invicon_Bow.png?66f96',
-    'd_leggings': 'https://minecraft.wiki/images/Invicon_Diamond_Leggings.png?b4750',
-    'i_leggings': 'https://minecraft.wiki/images/Invicon_Iron_Leggings.png?28f77',
+    'bow': 'https://minecraft.wiki/images/Bow_JE2_BE1.png?c428a',
+    'd_leggings': 'https://minecraft.wiki/images/thumb/Diamond_Leggings_JE2_BE2.png/160px-Diamond_Leggings_JE2_BE2.png?a2414',
+    'i_leggings': 'https://minecraft.wiki/images/thumb/Iron_Boots_JE2_BE2.png/160px-Iron_Boots_JE2_BE2.png?1b360',
     'shield': 'https://minecraft.wiki/images/thumb/Shield_JE2_BE1.png/160px-Shield_JE2_BE1.png?4837d',
     'leather': 'https://minecraft.wiki/images/Leather_JE2_BE2.png?10fae',
     'leather_tunic': 'https://minecraft.wiki/images/thumb/Leather_Tunic_JE4_BE2.png/160px-Leather_Tunic_JE4_BE2.png?a872d',
@@ -61,8 +61,8 @@ const getSpriteUrl = (itemId: string, itemName?: string): string => {
     'silex': 'https://minecraft.wiki/images/Flint_JE3_BE3.png?d10d1',
     'perdeneira': 'https://minecraft.wiki/images/Flint_and_Steel_JE4_BE2.png?1aaaf',
     'pedregulho': 'https://minecraft.wiki/images/Cobblestone_JE5_BE3.png?29624',
-    'alavanca': 'https://minecraft.wiki/images/Invicon_Lever.png?489e7',
-    'bau': 'https://minecraft.wiki/images/Invicon_Chest.png?1cab7'
+    'alavanca': 'https://minecraft.wiki/images/thumb/Powered_Wall_Lever_%28S%29_JE5-L3.png/150px-Powered_Wall_Lever_%28S%29_JE5-L3.png?6d95a',
+    'bau': 'https://minecraft.wiki/images/thumb/Chest_%28S%29_JE1.png/120px-Chest_%28S%29_JE1.png?0bbed'
   };
   
   const sprite = spriteMap[itemId];
