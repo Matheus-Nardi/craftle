@@ -85,8 +85,8 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputText(value);
-    // Só mostra sugestões se o usuário digitou algo
-    setShowSuggestions(value.trim().length > 0);
+    // Mantém as sugestões visíveis (já estão sendo filtradas pelo useMemo)
+    setShowSuggestions(true);
     setSelectedIndex(-1);
     // Clear error message when user starts typing
     if (errorMessage) {
@@ -131,10 +131,8 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
   };
 
   const handleInputFocus = () => {
-    // Só mostra sugestões se já há texto digitado
-    if (inputText.trim().length > 0) {
-      setShowSuggestions(true);
-    }
+    // Mostra todas as sugestões disponíveis quando o input recebe foco
+    setShowSuggestions(true);
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
@@ -174,7 +172,7 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
           </div>
           
           {/* Autocomplete Suggestions */}
-          {showSuggestions && !isGameOver && inputText.trim().length > 0 && filteredSuggestions.length > 0 && (
+          {showSuggestions && !isGameOver && filteredSuggestions.length > 0 && (
             <div 
               ref={suggestionsRef}
               className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-[#8b8b8b] border-2 border-b-white border-r-white border-t-[#373737] border-l-[#373737] shadow-lg"
@@ -207,10 +205,10 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
             </div>
           )}
           
-          {/* Mensagem quando não há sugestões mas há texto */}
-          {showSuggestions && !isGameOver && inputText.trim().length > 0 && filteredSuggestions.length === 0 && (
+          {/* Mensagem quando não há sugestões */}
+          {showSuggestions && !isGameOver && filteredSuggestions.length === 0 && (
             <div className="absolute z-50 w-full mt-1 bg-[#8b8b8b] border-2 border-b-white border-r-white border-t-[#373737] border-l-[#373737] px-3 py-2 text-white font-['Press_Start_2P'] text-xs">
-              Nenhum item encontrado
+              {inputText.trim().length > 0 ? 'Nenhum item encontrado' : 'Nenhum item disponível'}
             </div>
           )}
           
