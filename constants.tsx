@@ -53,7 +53,7 @@ const getSpriteUrl = (itemId: string, itemName?: string): string => {
     'string': 'https://minecraft.wiki/images/thumb/String_JE2_BE2.png/120px-String_JE2_BE2.png?25d69',
     'bow': 'https://minecraft.wiki/images/Bow_JE2_BE1.png?c428a',
     'd_leggings': 'https://minecraft.wiki/images/thumb/Diamond_Leggings_JE2_BE2.png/160px-Diamond_Leggings_JE2_BE2.png?a2414',
-    'i_leggings': 'https://minecraft.wiki/images/thumb/Iron_Boots_JE2_BE2.png/160px-Iron_Boots_JE2_BE2.png?1b360',
+    'i_leggings': 'https://minecraft.wiki/images/thumb/Iron_Leggings_JE2_BE2.png/160px-Iron_Leggings_JE2_BE2.png?05540',
     'shield': 'https://minecraft.wiki/images/thumb/Shield_JE2_BE1.png/160px-Shield_JE2_BE1.png?4837d',
     'leather': 'https://minecraft.wiki/images/Leather_JE2_BE2.png?10fae',
     'leather_tunic': 'https://minecraft.wiki/images/thumb/Leather_Tunic_JE4_BE2.png/160px-Leather_Tunic_JE4_BE2.png?a872d',
