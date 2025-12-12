@@ -1,0 +1,5 @@
+{
+  "name": "Craftle",
+  "description": "A daily Minecraft-themed crafting puzzle game where you guess the item based on a progressively revealed recipe.",
+  "requestFramePermissions": []
+}
