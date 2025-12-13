@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box } from 'lucide-react'; // Ícone de fallback caso nada carregue
 
 /**
@@ -127,6 +127,34 @@ const WIKI_IMAGE_MAP: Record<string, string> = {
 
 const WIKI_BASE_URL = 'https://minecraft.wiki/images';
 
+// Lista de itens que são conhecidos por serem blocos (não itens)
+// Esses itens devem tentar /block/ primeiro ao invés de /item/
+const BLOCK_ITEMS = new Set([
+  'brick_stairs',
+  'oak_fence',
+  'oak_fence_gate',
+  'glass_pane',
+  'stone_bricks',
+  'bricks',
+  'oak_door',
+  'oak_trapdoor',
+  'stone_button',
+  'stone_pressure_plate',
+  'redstone_torch',
+  'repeater',
+  'comparator',
+  'rail',
+  'powered_rail',
+  'ladder',
+  'furnace',
+  'crafting_table',
+  'chest',
+  'white_bed',
+  'campfire',
+  'lantern',
+  'anvil',
+]);
+
 interface MinecraftIconProps {
   name: string; // O ID oficial, ex: 'diamond_sword' ou 'oak_planks'
   size?: number;
@@ -140,25 +168,52 @@ export const MinecraftIcon: React.FC<MinecraftIconProps> = ({
   alt,
   className = ''
 }) => {
+  const isBlockItem = BLOCK_ITEMS.has(name);
+  
   const [imgSrc, setImgSrc] = useState<string>(() => {
-    // Inicializa com a primeira URL (versão mais estável)
+    // Para itens conhecidos por serem blocos, tenta /blocks/ primeiro
+    if (isBlockItem) {
+      return `${BASE_URLS[0]}/blocks/${name}.png`;
+    }
+    // Caso contrário, tenta /items/ primeiro
     return `${BASE_URLS[0]}/items/${name}.png`;
   });
   const [hasError, setHasError] = useState(false);
   const [currentBaseUrl, setCurrentBaseUrl] = useState(0);
-  const [currentType, setCurrentType] = useState<'items' | 'blocks'>('items');
+  const [currentType, setCurrentType] = useState<'items' | 'blocks'>(() => {
+    return isBlockItem ? 'blocks' : 'items';
+  });
   const [triedWiki, setTriedWiki] = useState(false);
+  const attemptCountRef = useRef(0);
+  const hasErrorRef = useRef(false);
+  const MAX_ATTEMPTS = 10; // Limite máximo de tentativas para evitar loops infinitos
 
   // Atualiza quando name muda
   useEffect(() => {
+    const isBlock = BLOCK_ITEMS.has(name);
     setCurrentBaseUrl(0);
-    setCurrentType('items');
+    setCurrentType(isBlock ? 'blocks' : 'items');
     setHasError(false);
     setTriedWiki(false);
-    setImgSrc(`${BASE_URLS[0]}/items/${name}.png`);
+    attemptCountRef.current = 0;
+    hasErrorRef.current = false;
+    setImgSrc(`${BASE_URLS[0]}/${isBlock ? 'blocks' : 'items'}/${name}.png`);
   }, [name]);
 
   const handleError = () => {
+    // Proteção contra loops infinitos
+    attemptCountRef.current += 1;
+    
+    // Se já tem erro ou atingiu o limite, para aqui
+    if (hasErrorRef.current || attemptCountRef.current >= MAX_ATTEMPTS) {
+      if (attemptCountRef.current >= MAX_ATTEMPTS && !hasErrorRef.current) {
+        console.warn(`⚠️ Limite de tentativas (${MAX_ATTEMPTS}) atingido para: ${name}. Mostrando fallback.`);
+        hasErrorRef.current = true;
+        setHasError(true);
+      }
+      return;
+    }
+
     // Estratégia de fallback em cascata (ordem de prioridade):
     
     // 1. Se está usando PrismarineJS (URLs 0 ou 1), primeiro tenta trocar de items para blocks
@@ -168,39 +223,77 @@ export const MinecraftIcon: React.FC<MinecraftIconProps> = ({
       return;
     }
     
-    // 2. Se já tentou blocks no PrismarineJS, tenta próxima URL base
+    // 2. Se já tentou blocks no PrismarineJS e ainda está na primeira URL, tenta próxima versão
+    if (currentBaseUrl < 1 && currentType === 'blocks' && imgSrc.includes('/blocks/')) {
+      const nextUrl = currentBaseUrl + 1;
+      setCurrentBaseUrl(nextUrl);
+      const isBlock = BLOCK_ITEMS.has(name);
+      setCurrentType(isBlock ? 'blocks' : 'items');
+      setImgSrc(`${BASE_URLS[nextUrl]}/${isBlock ? 'blocks' : 'items'}/${name}.png`);
+      return;
+    }
+    
+    // 3. Se já tentou ambas versões do PrismarineJS (items e blocks), tenta minecraft.wiki ANTES do mcasset.cloud
+    // Isso é mais eficiente pois o wiki tem mapeamento direto e é mais confiável
+    if (currentBaseUrl < 2 && !triedWiki && WIKI_IMAGE_MAP[name]) {
+      setTriedWiki(true);
+      setImgSrc(`${WIKI_BASE_URL}/${WIKI_IMAGE_MAP[name]}`);
+      return;
+    }
+    
+    // 4. Se já tentou blocks no PrismarineJS, tenta próxima URL base (mcasset.cloud)
     if (currentBaseUrl < BASE_URLS.length - 1) {
       const nextUrl = currentBaseUrl + 1;
       setCurrentBaseUrl(nextUrl);
-      setCurrentType('items');
+      const isBlock = BLOCK_ITEMS.has(name);
       
       // mcasset.cloud (índice 2) usa estrutura diferente: /item/ ou /block/
       if (nextUrl === 2) {
-        // mcasset.cloud estrutura: /item/nome.png ou /block/nome.png
-        setImgSrc(`${BASE_URLS[nextUrl]}/item/${name}.png`);
+        // Para itens conhecidos por serem blocos, tenta /block/ primeiro no mcasset.cloud
+        if (isBlock) {
+          setCurrentType('blocks');
+          setImgSrc(`${BASE_URLS[nextUrl]}/block/${name}.png`);
+        } else {
+          setCurrentType('items');
+          setImgSrc(`${BASE_URLS[nextUrl]}/item/${name}.png`);
+        }
       } else {
         // PrismarineJS usa /items/ ou /blocks/
-        setImgSrc(`${BASE_URLS[nextUrl]}/items/${name}.png`);
+        if (isBlock) {
+          setCurrentType('blocks');
+          setImgSrc(`${BASE_URLS[nextUrl]}/blocks/${name}.png`);
+        } else {
+          setCurrentType('items');
+          setImgSrc(`${BASE_URLS[nextUrl]}/items/${name}.png`);
+        }
       }
       return;
     }
     
-    // 3. Se mcasset.cloud falhou em /item/, tenta /block/
-    if (currentBaseUrl === 2 && currentType === 'items' && imgSrc.includes('/item/')) {
+    // 5. Se mcasset.cloud falhou em /block/, tenta /item/ (caso seja um item especial)
+    if (currentBaseUrl === 2 && currentType === 'blocks' && imgSrc.includes('/block/') && !imgSrc.includes('/item/')) {
+      setCurrentType('items');
+      setImgSrc(`${BASE_URLS[2]}/item/${name}.png`);
+      return;
+    }
+    
+    // 6. Se mcasset.cloud falhou em /item/, tenta /block/
+    if (currentBaseUrl === 2 && currentType === 'items' && imgSrc.includes('/item/') && !imgSrc.includes('/block/')) {
       setCurrentType('blocks');
       setImgSrc(`${BASE_URLS[2]}/block/${name}.png`);
       return;
     }
     
-    // 4. Se todas as URLs do minecraft-assets e mcasset.cloud falharam, tenta minecraft.wiki
+    // 7. Se todas as URLs do minecraft-assets e mcasset.cloud falharam, tenta minecraft.wiki
     if (!triedWiki && WIKI_IMAGE_MAP[name]) {
       setTriedWiki(true);
       setImgSrc(`${WIKI_BASE_URL}/${WIKI_IMAGE_MAP[name]}`);
       return;
     }
     
-    // 5. Se tudo falhou, mostra fallback visual
-    console.warn(`⚠️ Não foi possível carregar imagem para: ${name} após todas as tentativas`);
+    // 8. Se tudo falhou, mostra fallback visual
+    console.warn(`⚠️ Não foi possível carregar imagem para: ${name} após ${attemptCountRef.current} tentativas`);
+    hasErrorRef.current = true;
     setHasError(true);
   };
 
