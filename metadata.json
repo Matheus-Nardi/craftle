@@ -1,5 +1,5 @@
 {
   "name": "Craftle",
-  "description": "A daily Minecraft-themed crafting puzzle game where you guess the item based on a progressively revealed recipe.",
+  "description": "Jogo de crafting do Minecraft onde você adivinha o item baseado na receita revelada progressivamente.",
   "requestFramePermissions": []
 }

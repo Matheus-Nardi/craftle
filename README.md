@@ -1,6 +1,6 @@
 # Craftle
 
-Um jogo de adivinhação inspirado no Wordle, mas com receitas de crafting do Minecraft! Adivinhe qual item está sendo fabricado observando os ingredientes revelados na bancada de trabalho.
+Um jogo de adivinhação com receitas de crafting do Minecraft! Adivinhe qual item está sendo fabricado observando os ingredientes revelados na bancada de trabalho.
 
 ## 🎮 Como Jogar
 
