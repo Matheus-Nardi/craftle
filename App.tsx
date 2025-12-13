@@ -2,11 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Confetti from 'react-confetti';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
-import { Recipe, GameStatus, Guess } from './types';
+import { Recipe, GameStatus, Guess, PlayerStats } from './types';
 import { RECIPES } from './constants';
 import CraftingTable from './components/CraftingTable';
 import Controls from './components/Controls';
-import { Github } from 'lucide-react';
+import StatsModal from './components/StatsModal';
+import { loadStats, updateStatsAfterGame } from './services/statsService';
+import { tapFeedback, successFeedback, errorFeedback } from './utils/touchFeedback';
+import { shareWin } from './utils/share';
+import { Github, Share2 } from 'lucide-react';
 
 // Main Container Styles to mimic Minecraft Window
 const WINDOW_STYLE = "bg-[#C6C6C6] border-t-white border-l-white border-b-[#555] border-r-[#555] border-4 w-full max-w-3xl p-1 shadow-2xl relative";
@@ -48,10 +52,13 @@ const App: React.FC = () => {
   const [guesses, setGuesses] = useState<Guess[]>([]);
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing');
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [stats, setStats] = useState<PlayerStats>(loadStats());
+  const [showStatsModal, setShowStatsModal] = useState(false);
   // const [todayString, setTodayString] = useState<string>(getTodayString()); // Comentado - sistema diário desabilitado
 
   // Função para iniciar um novo jogo
   const startNewGame = useCallback(() => {
+    tapFeedback();
     // Escolhe uma receita aleatória
     const randomRecipe = RECIPES[Math.floor(Math.random() * RECIPES.length)];
     setRecipe(randomRecipe);
@@ -301,8 +308,10 @@ const App: React.FC = () => {
     setGuesses(prev => [...prev, newGuess]);
 
     if (isCorrect) {
+        successFeedback();
         setGameStatus('won');
     } else {
+        errorFeedback();
         // Wrong guess logic
         if (livesLeft <= 1) { // This was the last life
             setGameStatus('lost');
@@ -313,15 +322,47 @@ const App: React.FC = () => {
     }
   };
 
+  // Atualiza estatísticas quando o jogo termina
+  useEffect(() => {
+    if (gameStatus === 'won' || gameStatus === 'lost') {
+      if (recipe) {
+        const updatedStats = updateStatsAfterGame(
+          gameStatus === 'won',
+          guesses.length,
+          recipe.output.name
+        );
+        setStats(updatedStats);
+      }
+    }
+  }, [gameStatus, recipe, guesses.length]);
+
   if (!recipe) return <div className="min-h-screen bg-[#2e2e2e] flex items-center justify-center text-white">Carregando Chunks...</div>;
 
   return (
-    <div className="min-h-screen bg-[#2e2e2e] flex flex-col items-center justify-center p-4 w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[#2e2e2e] flex flex-col items-center justify-center p-4 w-full overflow-x-hidden relative">
       {gameStatus === 'won' && <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={500} />}
       
+      {/* Botão de Estatísticas - Canto Superior Direito */}
+      <button
+        onClick={() => {
+          tapFeedback();
+          setShowStatsModal(true);
+        }}
+        className="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 p-2 sm:p-2.5 bg-[#8b8b8b] border-2 border-b-white border-r-white border-t-[#373737] border-l-[#373737] hover:bg-[#a0a0a0] active:border-t-white active:border-l-white active:border-b-[#373737] active:border-r-[#373737] active:scale-95 transition-all shadow-lg touch-manipulation"
+        aria-label="Ver Estatísticas"
+        title="Ver Estatísticas"
+      >
+        <img 
+          src="https://i.pinimg.com/474x/32/28/18/3228180fa4f8c0478866026d30ca95a2.jpg" 
+          alt="Estatísticas" 
+          className="w-6 h-6 sm:w-7 sm:h-7"
+          style={{ imageRendering: 'pixelated' as const }}
+        />
+      </button>
+      
       {/* Title */}
-      <div className="mb-6 text-center w-full px-4">
-        <h1 className="text-2xl sm:text-4xl text-white mb-2 drop-shadow-md flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
+      <div className="mb-4 sm:mb-6 text-center w-full px-2 sm:px-4">
+        <h1 className="text-xl sm:text-2xl md:text-4xl text-white mb-2 drop-shadow-md flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
              <img 
                src="https://minecraft.wiki/images/thumb/Crafting_Table_JE4_BE3.png/150px-Crafting_Table_JE4_BE3.png?5767f" 
                alt="Bancada de Trabalho" 
@@ -340,9 +381,9 @@ const App: React.FC = () => {
         {/* <p className="text-[#666666] text-[8px] mt-1">Puzzle Diário • Um jogo por dia</p> */}
       </div>
 
-      <div className={`${WINDOW_STYLE} w-full mx-4`}>
+      <div className={`${WINDOW_STYLE} w-full mx-2 sm:mx-4`}>
         {/* Window Header */}
-        <div className="mb-4 text-[#3f3f3f] text-lg select-none pb-2 border-b-2 border-[#a0a0a0]">
+        <div className="mb-3 sm:mb-4 text-[#3f3f3f] text-base sm:text-lg select-none pb-2 border-b-2 border-[#a0a0a0]">
             Bancada de Trabalho
         </div>
 
@@ -364,12 +405,12 @@ const App: React.FC = () => {
 
         {/* Game Over / Win Message Overlay */}
         {gameStatus === 'lost' && (
-            <div className="mt-4 text-center">
-                <p className="text-red-600 mb-2">Você morreu!</p>
-                <p className="text-sm text-[#3f3f3f]">Era um <span className="font-bold">{recipe.output.name}</span></p>
+            <div className="mt-4 text-center px-2">
+                <p className="text-red-600 mb-2 text-sm sm:text-base font-bold">Você morreu!</p>
+                <p className="text-xs sm:text-sm text-[#3f3f3f] mb-4">Era um <span className="font-bold">{recipe.output.name}</span></p>
                 <button 
                     onClick={startNewGame}
-                    className="mt-4 px-4 py-2 bg-[#8b8b8b] text-white border-2 border-white hover:bg-[#a0a0a0] text-xs"
+                    className="px-4 py-2.5 sm:py-2 bg-[#8b8b8b] text-white border-2 border-white hover:bg-[#a0a0a0] active:bg-[#a0a0a0] active:scale-95 text-xs sm:text-sm font-['Press_Start_2P'] transition-all touch-manipulation min-h-[44px]"
                 >
                     Jogar Novamente
                 </button>
@@ -377,14 +418,28 @@ const App: React.FC = () => {
             </div>
         )}
          {gameStatus === 'won' && (
-            <div className="mt-4 text-center">
-                <p className="text-green-600 mb-2">Parabéns! Você fabricou!</p>
-                <button 
-                    onClick={startNewGame}
-                    className="mt-4 px-4 py-2 bg-[#8b8b8b] text-white border-2 border-white hover:bg-[#a0a0a0] text-xs"
-                >
-                    Fabricar Outro
-                </button>
+            <div className="mt-4 text-center px-2">
+                <p className="text-green-600 mb-2 text-sm sm:text-base font-bold">Parabéns! Você fabricou!</p>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-center mt-4">
+                    <button 
+                        onClick={async () => {
+                            tapFeedback();
+                            if (recipe) {
+                                await shareWin(guesses.length, recipe.output.name);
+                            }
+                        }}
+                        className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-[#8b8b8b] text-white border-2 border-white hover:bg-[#a0a0a0] active:bg-[#a0a0a0] active:scale-95 text-xs sm:text-sm font-['Press_Start_2P'] transition-all touch-manipulation flex items-center justify-center gap-2 min-h-[44px]"
+                    >
+                        <Share2 size={14} />
+                        Compartilhar
+                    </button>
+                    <button 
+                        onClick={startNewGame}
+                        className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-[#8b8b8b] text-white border-2 border-white hover:bg-[#a0a0a0] active:bg-[#a0a0a0] active:scale-95 text-xs sm:text-sm font-['Press_Start_2P'] transition-all touch-manipulation min-h-[44px]"
+                    >
+                        Fabricar Outro
+                    </button>
+                </div>
                 {/* <p className="text-xs text-[#3f3f3f] mt-2">Volte amanhã às 00:00 para um novo puzzle!</p> */}
             </div>
         )}
@@ -410,6 +465,13 @@ const App: React.FC = () => {
       {/* Vercel Analytics e Speed Insights */}
       <Analytics />
       <SpeedInsights />
+
+      {/* Modal de Estatísticas */}
+      <StatsModal 
+        stats={stats} 
+        isOpen={showStatsModal} 
+        onClose={() => setShowStatsModal(false)} 
+      />
     </div>
   );
 };

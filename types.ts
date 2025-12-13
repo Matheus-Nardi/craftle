@@ -23,3 +23,14 @@ export interface Guess {
   text: string;
   isCorrect: boolean;
 }
+
+export interface PlayerStats {
+  totalGames: number;
+  wins: number;
+  losses: number;
+  winStreak: number;
+  bestStreak: number;
+  averageGuesses: number;
+  itemsDiscovered: Set<string>;
+  lastPlayed: Date;
+}

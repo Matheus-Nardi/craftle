@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Guess, GameStatus } from '../types';
 import { CRAFTABLE_ITEMS } from '../constants';
+import { tapFeedback } from '../utils/touchFeedback';
 
 interface ControlsProps {
   onGuess: (text: string) => void;
@@ -95,6 +96,7 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
   };
 
   const handleSuggestionClick = (suggestion: string) => {
+    tapFeedback();
     setInputText(suggestion);
     setShowSuggestions(false);
     setSelectedIndex(-1);
@@ -104,6 +106,8 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
+    
+    tapFeedback();
     
     // If a suggestion is selected, use it
     const finalText = selectedIndex >= 0 && filteredSuggestions[selectedIndex] 
@@ -223,10 +227,11 @@ const Controls: React.FC<ControlsProps> = ({ onGuess, guesses, gameStatus, lives
             type="submit"
             disabled={isGameOver || !inputText.trim() || !!errorMessage}
             className={`
-                px-4 sm:px-6 py-3 
+                px-4 sm:px-6 py-3 min-h-[44px]
                 font-['Press_Start_2P'] text-xs sm:text-sm whitespace-nowrap flex-shrink-0
                 border-t-white border-l-white border-b-[#555] border-r-[#555] border-4
                 active:border-t-[#555] active:border-l-[#555] active:border-b-white active:border-r-white
+                active:scale-95 transition-all touch-manipulation
                 ${isGameOver || errorMessage ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#c6c6c6] hover:bg-[#dcdcdc] text-[#202020]'}
             `}
         >
